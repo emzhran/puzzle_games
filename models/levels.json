@@ -6,7 +6,8 @@
     "diff": "Mudah",
     "name": "Pemandangan Alam",
     "desc": "Gambar alam yang menenangkan.",
-    "imageUrl": "https://loremflickr.com/600/600/nature"
+    "imageUrl": "https://loremflickr.com/600/600/nature",
+    "randomize": true
   },
   {
     "level": 2,
@@ -15,7 +16,8 @@
     "diff": "Mudah",
     "name": "Kucing Lucu",
     "desc": "Wajah kucing yang menggemaskan.",
-    "imageUrl": "https://loremflickr.com/600/600/cat"
+    "imageUrl": "https://loremflickr.com/600/600/cat",
+    "randomize": true
   },
   {
     "level": 3,
@@ -24,6 +26,7 @@
     "diff": "Mudah",
     "name": "Makanan Lezat",
     "desc": "Foto makanan yang menggugah selera.",
-    "imageUrl": "https://loremflickr.com/600/600/food"
+    "imageUrl": "https://loremflickr.com/600/600/food",
+    "randomize": true
   }
 ]

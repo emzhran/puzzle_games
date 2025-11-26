@@ -262,6 +262,7 @@ function fetchLevelsAndStart() {
     });
 }
 
+// ---------- replace loadLevel with this enhanced version ----------
 function loadLevel(idx) {
   isLoading = true;
   solved = false;
@@ -269,8 +270,10 @@ function loadLevel(idx) {
   tiles = [];
 
   if (idx >= levels.length) {
-    alert('Selamat semua level selesai');
+    alert('Selamat! Semua level selesai.');
     isLoading = false;
+    const nextBtn = document.getElementById('nextLevelBtn');
+    if (nextBtn) nextBtn.style.display = 'none';
     return;
   }
 
@@ -278,14 +281,46 @@ function loadLevel(idx) {
   const config = levels[currentLevelIdx];
   cols = config.cols || 3;
   rows = config.rows || 3;
-  let canvasUrl = config.imageUrl || '';
-  if (/^https?:\/\//i.test(canvasUrl)) canvasUrl = '/api/image-proxy?url=' + encodeURIComponent(config.imageUrl);
-  else if (!canvasUrl.startsWith('/')) canvasUrl = '/' + canvasUrl;
 
+  // ---------- Determine actual image URL to use ----------
+  let chosenUrl = config.imageUrl || '';
+
+  // 1) If imageList present, pick random from it
+  if (Array.isArray(config.imageList) && config.imageList.length > 0) {
+    chosenUrl = config.imageList[Math.floor(Math.random() * config.imageList.length)];
+    console.log('[level] picked from imageList ->', chosenUrl);
+  }
+
+  // 2) If imageUrl contains placeholder {rand} -> replace with random integer
+  if (typeof chosenUrl === 'string' && chosenUrl.includes('{rand}')) {
+    const r = Math.floor(Math.random() * 1000000);
+    chosenUrl = chosenUrl.replace(/\{rand\}/g, String(r));
+    console.log('[level] replaced {rand} ->', chosenUrl);
+  }
+
+  // 3) If config.randomize === true -> append cache-buster param
+  if (config.randomize) {
+    const sep = chosenUrl.includes('?') ? '&' : '?';
+    chosenUrl = chosenUrl + sep + 'cb=' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    console.log('[level] randomize true -> appended cb param ->', chosenUrl);
+  }
+
+  // 4) If the URL is remote, we will request via proxy for CORS safety
+  let canvasUrl = chosenUrl;
+  if (/^https?:\/\//i.test(chosenUrl)) {
+    // proxy the remote URL (proxy will fetch and return image)
+    canvasUrl = '/api/image-proxy?url=' + encodeURIComponent(chosenUrl);
+  } else {
+    // ensure absolute path for local asset
+    if (!canvasUrl.startsWith('/')) canvasUrl = '/' + canvasUrl;
+  }
+
+  // Set reference image to the same URL canvas will use (so reference equals puzzle)
   const ref = document.getElementById('refImg');
   if (ref) ref.src = canvasUrl;
+
   updateUI(config);
-  console.log('[level] loading', idx, '->', config.imageUrl);
+  console.log('[level] loading', currentLevelIdx, '-> original:', config.imageUrl, 'chosen:', chosenUrl, 'canvasUrl:', canvasUrl);
 
   loadImage(canvasUrl,
     (imgLoaded) => {
@@ -294,15 +329,19 @@ function loadLevel(idx) {
       window.img = img;
       tileW = Math.floor(width / cols);
       tileH = Math.floor(height / rows);
+
+      // init tiles (use puzzle.js's initTiles if exists)
       if (typeof initTiles === 'function') {
         try { initTiles(width, height); } catch (e) { initTilesLocal(width, height); }
       } else {
         initTilesLocal(width, height);
       }
+
       isLoading = false;
+      console.log('[image] loaded & ready');
     },
     (err) => {
-      console.error('[image] load failed', canvasUrl, err);
+      console.error('[image] failed to load', canvasUrl, err);
       img = createGraphics(CANVAS_SIZE, CANVAS_SIZE);
       img.background(200);
       img.fill(80);
