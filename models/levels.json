@@ -28,5 +28,75 @@
     "desc": "Foto makanan yang menggugah selera.",
     "imageUrl": "https://loremflickr.com/600/600/food",
     "randomize": true
+  },
+  {
+    "level": 4,
+    "cols": 4,
+    "rows": 4,
+    "diff": "Sedang",
+    "name": "Arsitektur Kota",
+    "desc": "Bangunan perkotaan yang megah.",
+    "imageUrl": "https://loremflickr.com/600/600/city",
+    "randomize": true
+  },
+  {
+    "level": 5,
+    "cols": 4,
+    "rows": 4,
+    "diff": "Sedang",
+    "name": "Dunia Bawah Laut",
+    "desc": "Keindahan terumbu karang dan ikan.",
+    "imageUrl": "https://loremflickr.com/600/600/underwater",
+    "randomize": true
+  },
+  {
+    "level": 6,
+    "cols": 4,
+    "rows": 4,
+    "diff": "Sedang",
+    "name": "Mobil Sport",
+    "desc": "Kendaraan cepat dengan desain keren.",
+    "imageUrl": "https://loremflickr.com/600/600/car",
+    "randomize": true
+  },
+  {
+    "level": 7,
+    "cols": 4,
+    "rows": 4,
+    "diff": "Sedang",
+    "name": "Burung Eksotis",
+    "desc": "Warna-warni bulu burung yang indah.",
+    "imageUrl": "https://loremflickr.com/600/600/bird",
+    "randomize": true
+  },
+  {
+    "level": 8,
+    "cols": 5,
+    "rows": 5,
+    "diff": "Sulit",
+    "name": "Seni Abstrak",
+    "desc": "Pola warna yang rumit dan artistik.",
+    "imageUrl": "https://loremflickr.com/600/600/abstract",
+    "randomize": true
+  },
+  {
+    "level": 9,
+    "cols": 5,
+    "rows": 5,
+    "diff": "Sulit",
+    "name": "Galaksi Luar Angkasa",
+    "desc": "Bintang dan nebula yang jauh di sana.",
+    "imageUrl": "https://loremflickr.com/600/600/space",
+    "randomize": true
+  },
+  {
+    "level": 10,
+    "cols": 5,
+    "rows": 5,
+    "diff": "Sulit",
+    "name": "Teknologi Masa Depan",
+    "desc": "Komponen sirkuit dan cahaya neon.",
+    "imageUrl": "https://loremflickr.com/600/600/technology",
+    "randomize": true
   }
 ]

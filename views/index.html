@@ -15,6 +15,9 @@
   <div class="container">
     <div class="sidebar">
       <span id="diffBadge" class="level-badge diff-easy">Mudah</span>
+      <div style="font-size: 1.2rem; margin: 10px 0; font-weight: bold; color: #d35400;">
+        Waktu: <span id="timerDisplay">00:00</span>
+      </div>
       <h1 id="levelTitle">Level 1</h1>
       <h2 id="puzzleName">Judul Puzzle</h2>
       <div class="description-box">
@@ -28,7 +31,7 @@
       </div>
       <div class="controls">
         <button id="shuffleBtn">Acak Ulang</button>
-        <button id="solveBtn">Lihat Solusi</button>
+        <!-- <button id="solveBtn">Lihat Solusi</button> -->
         <button id="nextLevelBtn" style="display:none;">Lanjut Level</button>
       </div>
     </div>
@@ -36,6 +39,22 @@
       <div id="sketch-holder"></div>
     </div>
   </div>
+
+  <audio id="audio-bgm" loop>
+    <source src="assets/mixkit-clock-countdown-bleeps-916.wav" type="audio/wav">
+  </audio>
+
+  <audio id="audio-win">
+      <source src="assets/audio/win.mp3" type="audio/wav">
+  </audio>
+
+  <audio id="audio-fail">
+      <source src="assets/mixkit-wrong-answer-fail-notification-946.wav" type="audio/wav">
+  </audio>
+
+  <audio id="audio-finish">
+      <source src="assets/audio/finish.mp3" type="audio/wav">
+  </audio>
 
   <!-- client code (served from /controllers) -->
   <script src="/controllers/puzzle.js"></script>

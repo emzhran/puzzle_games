@@ -17,6 +17,10 @@ let solved = false;
 let tileW = 0;
 let tileH = 0;
 
+let timerInterval = null;
+let timeLeft = 0;        
+let isGameOver = false;
+
 let levels = [];
 let currentLevelIdx = 0;
 let isLoading = true;
@@ -39,7 +43,7 @@ function draw() {
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(16);
-    text('Memuat gambar... lihat Console / Network', width / 2, height / 2);
+    text('Memuat gambar...', width / 2, height / 2);
     return;
   }
 
@@ -85,6 +89,48 @@ function mousePressed() {
     swapUnified(selected, idx);
     selected = -1;
   }
+}
+
+
+function startTimer(seconds) {
+  stopTimer(); 
+  timeLeft = seconds;
+  isGameOver = false;
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+
+    if (timeLeft <= 0) {
+      handleGameOver();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timerDisplay');
+  if (!el) return;
+
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  el.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+  
+  el.style.color = timeLeft <= 10 ? 'red' : '#d35400';
+}
+
+function handleGameOver() {
+  stopTimer();
+  isGameOver = true;
+  SoundManager.playFail();
+  alert("Waktu Habis! Game Over.");
 }
 
 /* -------------------------
@@ -144,6 +190,8 @@ function swapUnified(posA, posB) {
   // check solved
   if (checkSolvedUnified()) {
     solved = true;
+    stopTimer();
+    SoundManager.playWin();
     const nextBtn = document.getElementById('nextLevelBtn');
     if (nextBtn) nextBtn.style.display = 'block';
     console.log('[puzzle] solved (unified)');
@@ -267,10 +315,15 @@ function loadLevel(idx) {
   isLoading = true;
   solved = false;
   selected = -1;
+  isGameOver = false;
+  stopTimer();
   tiles = [];
+
+  SoundManager.stopBGM();
 
   if (idx >= levels.length) {
     alert('Selamat! Semua level selesai.');
+    SoundManager.playFinish();
     isLoading = false;
     const nextBtn = document.getElementById('nextLevelBtn');
     if (nextBtn) nextBtn.style.display = 'none';
@@ -282,40 +335,35 @@ function loadLevel(idx) {
   cols = config.cols || 3;
   rows = config.rows || 3;
 
-  // ---------- Determine actual image URL to use ----------
+  const levelNum = config.level || (currentLevelIdx + 1);
+  
+  let duration = 60;
+
+  if (levelNum >= 8) {
+    duration = 120;
+  } else if (levelNum >= 4) {
+    duration = 100;
+  } else {
+    duration = 60;
+  }
+
+  console.log(`[level] Memuat Level ${levelNum}. Target Waktu: ${duration} detik.`);
+  // -------------------------
+
   let chosenUrl = config.imageUrl || '';
 
-  // 1) If imageList present, pick random from it
-  if (Array.isArray(config.imageList) && config.imageList.length > 0) {
-    chosenUrl = config.imageList[Math.floor(Math.random() * config.imageList.length)];
-    console.log('[level] picked from imageList ->', chosenUrl);
-  }
-
-  // 2) If imageUrl contains placeholder {rand} -> replace with random integer
-  if (typeof chosenUrl === 'string' && chosenUrl.includes('{rand}')) {
-    const r = Math.floor(Math.random() * 1000000);
-    chosenUrl = chosenUrl.replace(/\{rand\}/g, String(r));
-    console.log('[level] replaced {rand} ->', chosenUrl);
-  }
-
-  // 3) If config.randomize === true -> append cache-buster param
   if (config.randomize) {
     const sep = chosenUrl.includes('?') ? '&' : '?';
-    chosenUrl = chosenUrl + sep + 'cb=' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    console.log('[level] randomize true -> appended cb param ->', chosenUrl);
+    chosenUrl = chosenUrl + sep + 'cb=' + Date.now();
   }
 
-  // 4) If the URL is remote, we will request via proxy for CORS safety
   let canvasUrl = chosenUrl;
   if (/^https?:\/\//i.test(chosenUrl)) {
-    // proxy the remote URL (proxy will fetch and return image)
     canvasUrl = '/api/image-proxy?url=' + encodeURIComponent(chosenUrl);
   } else {
-    // ensure absolute path for local asset
     if (!canvasUrl.startsWith('/')) canvasUrl = '/' + canvasUrl;
   }
 
-  // Set reference image to the same URL canvas will use (so reference equals puzzle)
   const ref = document.getElementById('refImg');
   if (ref) ref.src = canvasUrl;
 
@@ -330,7 +378,6 @@ function loadLevel(idx) {
       tileW = Math.floor(width / cols);
       tileH = Math.floor(height / rows);
 
-      // init tiles (use puzzle.js's initTiles if exists)
       if (typeof initTiles === 'function') {
         try { initTiles(width, height); } catch (e) { initTilesLocal(width, height); }
       } else {
@@ -338,6 +385,13 @@ function loadLevel(idx) {
       }
 
       isLoading = false;
+      
+      if (typeof startTimer === 'function') {
+          startTimer(duration);
+      }
+
+      SoundManager.playBGM();
+
       console.log('[image] loaded & ready');
     },
     (err) => {
@@ -349,6 +403,7 @@ function loadLevel(idx) {
       img.textSize(14);
       img.text('Gagal memuat gambar', CANVAS_SIZE / 2, CANVAS_SIZE / 2);
       window.img = img;
+      
       initTilesLocal(width, height);
       isLoading = false;
     }
@@ -379,6 +434,15 @@ function attachUIHandlers() {
     console.log('[ui] shuffle clicked');
     if (isLoading || solved) return;
     shuffleTilesUnified();
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        const newMute = muteBtn.cloneNode(true);
+        muteBtn.replaceWith(newMute);
+        
+        document.getElementById('muteBtn').addEventListener('click', function() {
+            this.textContent = SoundManager.toggleMute();
+        });
+    }
   }
 
   function onSolveClicked() {
@@ -393,6 +457,7 @@ function attachUIHandlers() {
       tiles.forEach(t => t.currentIndex = t.correctIndex);
     }
     solved = true;
+    stopTimer();
     const nextBtn = document.getElementById('nextLevelBtn');
     if (nextBtn) nextBtn.style.display = 'block';
   }
@@ -424,6 +489,66 @@ function attachUIHandlers() {
   if (document.readyState === 'complete' || document.readyState === 'interactive') attachNow();
   else document.addEventListener('DOMContentLoaded', attachNow);
 }
+
+const SoundManager = {
+    isMuted: false,
+    _play: function(id) {
+        if (this.isMuted) return;
+        const el = document.getElementById(id);
+        if (el) {
+            el.currentTime = 0; 
+            el.play().catch(e => console.log("Audio blocked (autplay policy):", e));
+        }
+    },
+
+    _stop: function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.pause();
+            el.currentTime = 0;
+        }
+    },
+
+    playBGM: function() {
+        if (this.isMuted) return;
+        const el = document.getElementById('audio-bgm');
+        if (el && el.paused) {
+            el.volume = 0.5;
+            el.play().catch(e => console.log("BGM blocked:", e));
+        }
+    },
+
+    stopBGM: function() {
+        this._stop('audio-bgm');
+    },
+    playWin: function() {
+        this.stopBGM(); 
+        this._play('audio-win');
+    },
+    playFail: function() {
+        this.stopBGM();
+        this._play('audio-fail');
+    },
+    playFinish: function() {
+        this.stopBGM();
+        this._play('audio-finish');
+    },
+    
+    toggleMute: function() {
+        this.isMuted = !this.isMuted;
+        if (this.isMuted) {
+            this.stopBGM(); 
+            this._stop('audio-win');
+            this._stop('audio-fail');
+            this._stop('audio-finish');
+            return "🔇 Suara: OFF";
+        } else {
+            // Jika di-unmute saat game jalan, nyalakan BGM
+            if (!solved && !isGameOver) this.playBGM();
+            return "🔊 Suara: ON";
+        }
+    }
+};
 
 /* Expose for other modules or console debugging */
 window.shuffleTiles = shuffleTilesUnified;
